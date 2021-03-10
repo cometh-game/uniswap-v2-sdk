@@ -1,35 +1,50 @@
-import { BigintIsh, ChainId, Price, Token, TokenAmount } from '@uniswap/sdk-core'
+import { Price } from './fractions/price'
+import { TokenAmount } from './fractions/tokenAmount'
 import invariant from 'tiny-invariant'
 import JSBI from 'jsbi'
 import { pack, keccak256 } from '@ethersproject/solidity'
 import { getCreate2Address } from '@ethersproject/address'
-import babylonianSqrt from '../utils/babylonianSqrt'
 
-import { FACTORY_ADDRESS, INIT_CODE_HASH, MINIMUM_LIQUIDITY, FIVE, _997, _1000, ONE, ZERO } from '../constants'
+import {
+  BigintIsh,
+  FACTORY_ADDRESS,
+  INIT_CODE_HASH,
+  MINIMUM_LIQUIDITY,
+  ZERO,
+  ONE,
+  NINE,
+  _995,
+  _1000,
+  ChainId
+} from '../constants'
+import { sqrt, parseBigintIsh } from '../utils'
 import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
+import { Token } from './token'
 
-export const computePairAddress = ({
-  factoryAddress,
-  tokenA,
-  tokenB
-}: {
-  factoryAddress: string
-  tokenA: Token
-  tokenB: Token
-}): string => {
-  const [token0, token1] = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
-  return getCreate2Address(
-    factoryAddress,
-    keccak256(['bytes'], [pack(['address', 'address'], [token0.address, token1.address])]),
-    INIT_CODE_HASH
-  )
-}
+let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } = {}
+
 export class Pair {
   public readonly liquidityToken: Token
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
 
   public static getAddress(tokenA: Token, tokenB: Token): string {
-    return computePairAddress({ factoryAddress: FACTORY_ADDRESS, tokenA, tokenB })
+    const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
+
+    if (PAIR_ADDRESS_CACHE?.[tokens[0].address]?.[tokens[1].address] === undefined) {
+      PAIR_ADDRESS_CACHE = {
+        ...PAIR_ADDRESS_CACHE,
+        [tokens[0].address]: {
+          ...PAIR_ADDRESS_CACHE?.[tokens[0].address],
+          [tokens[1].address]: getCreate2Address(
+            FACTORY_ADDRESS[tokens[0].chainId],
+            keccak256(['bytes'], [pack(['address', 'address'], [tokens[0].address, tokens[1].address])]),
+            INIT_CODE_HASH
+          )
+        }
+      }
+    }
+
+    return PAIR_ADDRESS_CACHE[tokens[0].address][tokens[1].address]
   }
 
   public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount) {
@@ -80,7 +95,7 @@ export class Pair {
   /**
    * Returns the chain ID of the tokens in the pair.
    */
-  public get chainId(): ChainId | number {
+  public get chainId(): ChainId {
     return this.token0.chainId
   }
 
@@ -112,7 +127,7 @@ export class Pair {
     }
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
-    const inputAmountWithFee = JSBI.multiply(inputAmount.raw, _997)
+    const inputAmountWithFee = JSBI.multiply(inputAmount.raw, _995)
     const numerator = JSBI.multiply(inputAmountWithFee, outputReserve.raw)
     const denominator = JSBI.add(JSBI.multiply(inputReserve.raw, _1000), inputAmountWithFee)
     const outputAmount = new TokenAmount(
@@ -138,7 +153,7 @@ export class Pair {
     const outputReserve = this.reserveOf(outputAmount.token)
     const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
     const numerator = JSBI.multiply(JSBI.multiply(inputReserve.raw, outputAmount.raw), _1000)
-    const denominator = JSBI.multiply(JSBI.subtract(outputReserve.raw, outputAmount.raw), _997)
+    const denominator = JSBI.multiply(JSBI.subtract(outputReserve.raw, outputAmount.raw), _995)
     const inputAmount = new TokenAmount(
       outputAmount.token.equals(this.token0) ? this.token1 : this.token0,
       JSBI.add(JSBI.divide(numerator, denominator), ONE)
@@ -159,10 +174,7 @@ export class Pair {
 
     let liquidity: JSBI
     if (JSBI.equal(totalSupply.raw, ZERO)) {
-      liquidity = JSBI.subtract(
-        babylonianSqrt(JSBI.multiply(tokenAmounts[0].raw, tokenAmounts[1].raw)),
-        MINIMUM_LIQUIDITY
-      )
+      liquidity = JSBI.subtract(sqrt(JSBI.multiply(tokenAmounts[0].raw, tokenAmounts[1].raw)), MINIMUM_LIQUIDITY)
     } else {
       const amount0 = JSBI.divide(JSBI.multiply(tokenAmounts[0].raw, totalSupply.raw), this.reserve0.raw)
       const amount1 = JSBI.divide(JSBI.multiply(tokenAmounts[1].raw, totalSupply.raw), this.reserve1.raw)
@@ -191,13 +203,13 @@ export class Pair {
       totalSupplyAdjusted = totalSupply
     } else {
       invariant(!!kLast, 'K_LAST')
-      const kLastParsed = JSBI.BigInt(kLast)
+      const kLastParsed = parseBigintIsh(kLast)
       if (!JSBI.equal(kLastParsed, ZERO)) {
-        const rootK = babylonianSqrt(JSBI.multiply(this.reserve0.raw, this.reserve1.raw))
-        const rootKLast = babylonianSqrt(kLastParsed)
+        const rootK = sqrt(JSBI.multiply(this.reserve0.raw, this.reserve1.raw))
+        const rootKLast = sqrt(kLastParsed)
         if (JSBI.greaterThan(rootK, rootKLast)) {
           const numerator = JSBI.multiply(totalSupply.raw, JSBI.subtract(rootK, rootKLast))
-          const denominator = JSBI.add(JSBI.multiply(rootK, FIVE), rootKLast)
+          const denominator = JSBI.add(JSBI.multiply(rootK, NINE), rootKLast)
           const feeLiquidity = JSBI.divide(numerator, denominator)
           totalSupplyAdjusted = totalSupply.add(new TokenAmount(this.liquidityToken, feeLiquidity))
         } else {

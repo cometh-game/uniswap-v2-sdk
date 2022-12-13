@@ -10,7 +10,8 @@ export enum ChainId {
   GÖRLI = 5,
   KOVAN = 42,
   MUMBAI = 80001,
-  MATIC = 137
+  MATIC = 137,
+  ROLLUP_GOERLI = 90001,
 }
 
 export enum TradeType {
@@ -32,6 +33,7 @@ export const FACTORY_ADDRESS: { [chainId in ChainId]: string } = {
   [ChainId.KOVAN]: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   [ChainId.MUMBAI]: '0x15E295218618D3C47A04927D036A57a1aEf44C3b',
   [ChainId.MATIC]: '0x800b052609c355cA8103E06F022aA30647eAd60a',
+  [ChainId.ROLLUP_GOERLI]: '0x1EFe5997CBb63409A3F7fBFef368DA11DA93339d',
 }
 
 export const INIT_CODE_HASH: { [chainId in ChainId]: string } = {
@@ -42,6 +44,7 @@ export const INIT_CODE_HASH: { [chainId in ChainId]: string } = {
   [ChainId.KOVAN]: '0x499154cad90a3563f914a25c3710ed01b9a43b8471a35ba8a66a056f37638542',
   [ChainId.MUMBAI]: '0xe3b0ba5c263d8ac73c0c6f932b18b50eadc02beef7b26b13ac2cd5bb1f57c761',
   [ChainId.MATIC]: '0x499154cad90a3563f914a25c3710ed01b9a43b8471a35ba8a66a056f37638542',
+  [ChainId.ROLLUP_GOERLI]: '0x631843e3ecb3ddc2c6262cfe9cf3776eb58a0ccaf325b58738b8457da7ed8cea',
 }
 
 export const MINIMUM_LIQUIDITY = JSBI.BigInt(1000)

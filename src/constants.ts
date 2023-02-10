@@ -11,7 +11,7 @@ export enum ChainId {
   KOVAN = 42,
   MUMBAI = 80001,
   MATIC = 137,
-  ROLLUP_GOERLI = 90001,
+  ROLLUP_GOERLI = 1419,
 }
 
 export enum TradeType {
@@ -33,7 +33,7 @@ export const FACTORY_ADDRESS: { [chainId in ChainId]: string } = {
   [ChainId.KOVAN]: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   [ChainId.MUMBAI]: '0x15E295218618D3C47A04927D036A57a1aEf44C3b',
   [ChainId.MATIC]: '0x800b052609c355cA8103E06F022aA30647eAd60a',
-  [ChainId.ROLLUP_GOERLI]: '0x1EFe5997CBb63409A3F7fBFef368DA11DA93339d',
+  [ChainId.ROLLUP_GOERLI]: '0x59ea29DFb8cBaBB745B96b67fe2Dc28cfB41Ecf0',
 }
 
 export const INIT_CODE_HASH: { [chainId in ChainId]: string } = {

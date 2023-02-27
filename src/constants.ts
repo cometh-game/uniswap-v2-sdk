@@ -33,7 +33,7 @@ export const FACTORY_ADDRESS: { [chainId in ChainId]: string } = {
   [ChainId.KOVAN]: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   [ChainId.MUMBAI]: '0x15E295218618D3C47A04927D036A57a1aEf44C3b',
   [ChainId.MATIC]: '0x800b052609c355cA8103E06F022aA30647eAd60a',
-  [ChainId.ROLLUP_GOERLI]: '0x59ea29DFb8cBaBB745B96b67fe2Dc28cfB41Ecf0',
+  [ChainId.ROLLUP_GOERLI]: '0x81e9C0F03f1942513e13A80e42EC60dF2D86a9e8',
 }
 
 export const INIT_CODE_HASH: { [chainId in ChainId]: string } = {
